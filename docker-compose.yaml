@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx
+    image: custom-nginx:0.1
     ports:
       - 8080:80
     volumes:
