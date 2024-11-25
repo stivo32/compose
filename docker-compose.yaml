@@ -12,8 +12,10 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: .docker/app/Dockerfile
     ports:
       - 8000:8000
     expose:
       - 8000
+    volumes:
+      - ./api:/app/api
