@@ -1,45 +1,112 @@
-from typing import List, Dict
+import os
+import time
+from typing import Optional, List
+from uuid import uuid4
 
-from fastapi import FastAPI
+import redis.asyncio as redis
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+import logging
+
+logger = logging.getLogger()
 
 
-class Task(BaseModel):
+class TaskInput(BaseModel):
     name: str
     description: str
+
+
+class Task(TaskInput):
+    id: str
     timestamp: int
 
 
+async_redis = redis.Redis(
+    connection_pool=redis.BlockingConnectionPool(
+        host=os.getenv("REDIS_HOST", "redis"),
+        port=int(os.getenv("REDIS_PORT", 6379)),
+        db=int(os.getenv("REDIS_DB", 0)),
+    ),
+)
 app = FastAPI()
 
-tasks: Dict[str, Task] = {}
+
+def decode_redis_data(data: dict) -> dict:
+    return {key.decode(): value.decode() if isinstance(value, bytes) else value for key, value in data.items()}
 
 
-@app.get('/task')
-def read_tasks() -> dict:
-    return {'tasks': list(tasks.values())}
+async def persist_task(task: Task) -> None:
+    task_key = f"task:{task.id}"
+    await async_redis.hset(
+        task_key,
+        mapping=task.dict(),
+    )
+    await async_redis.zadd("tasks", {str(task.id): task.timestamp})
 
 
-@app.get('/task/{task_id}')
-def read_task(task_id: str) -> dict:
-    if task_id in tasks:
-        return {'task': tasks[task_id]}
-    else:
-        return {'task_id': task_id, 'message': 'Not found'}
+async def fetch_task(task_id: str) -> Optional[Task]:
+    task_data = await async_redis.hgetall(f"task:{task_id}")
+    if not task_data:
+        return None
+    task_data = decode_redis_data(task_data)
+    return Task(
+        id=task_data["id"],
+        name=task_data["name"],
+        description=task_data["description"],
+        timestamp=int(task_data["timestamp"]),
+    )
 
 
-@app.post('/task/{task_id}')
-def create_tasks(task_id: str, task: Task) -> dict:
-    if task_id in tasks:
-        return {'task_id': task_id, 'task': task, 'message': 'Already created', 'created': False}
-    else:
-        tasks[task_id] = task
-        print(tasks)
-        return {'task_id': task_id, 'task': task, 'message': 'Created successfully', 'created': True}
+async def delete_task(task_id: str) -> None:
+    await async_redis.delete(f"task:{task_id}")
+    await async_redis.zrem("tasks", task_id)
 
 
-@app.delete('/task/{task_id}')
-def delete_tasks(task_id: str) -> dict:
-    if task_id in tasks:
-        del tasks[task_id]
-    return {'task_id': task_id, 'message': 'Deleted'}
+async def fetch_tasks() -> List[Task]:
+    task_ids: list[bytes] = await async_redis.zrange("tasks", 0, -1)
+    tasks = []
+    for task_id in task_ids:
+        task = await fetch_task(task_id.decode())
+        if task is None:
+            continue
+        tasks.append(task)
+    return tasks
+
+
+@app.get("/ping")
+async def health_check():
+    return {"message": "pong"}
+
+
+@app.get("/task")
+async def get_tasks():
+    tasks = await fetch_tasks()
+    return {"tasks": tasks}
+
+
+@app.get("/task/{task_id}")
+async def get_task(task_id: str):
+    task = await fetch_task(task_id)
+    if task is None:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return {"task": task}
+
+
+@app.post("/task")
+async def create_task(task: TaskInput):
+    task_id = str(uuid4())
+    task_to_insert = Task(id=task_id, timestamp=int(time.time()), **task.dict())
+    try:
+        await persist_task(task_to_insert)
+        return {"task": task_to_insert, "created": True, "message": "Task Created Successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/task/{task_id}")
+async def remove_task(task_id: str):
+    try:
+        await delete_task(task_id)
+        return {"id": task_id, "message": "Task deleted"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
