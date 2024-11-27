@@ -21,11 +21,19 @@ class Task(TaskInput):
     timestamp: int
 
 
+def get_env(var_name: str, default: str) -> str:
+    return os.getenv(var_name, default)
+
+
+def get_int_env(var_name: str, default: int) -> int:
+    return int(get_env(var_name, default))
+
+
 async_redis = redis.Redis(
     connection_pool=redis.BlockingConnectionPool(
-        host=os.getenv("REDIS_HOST", "redis"),
-        port=int(os.getenv("REDIS_PORT", 6379)),
-        db=int(os.getenv("REDIS_DB", 0)),
+        host=get_env("REDIS_HOST", "redis"),
+        port=get_int_env("REDIS_PORT", 6379),
+        db=get_int_env("REDIS_DB", 0),
     ),
 )
 app = FastAPI()

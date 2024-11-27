@@ -17,6 +17,8 @@ RUN poetry export -f requirements.txt --without-hashes -o requirements.txt && \
 
 FROM python:3.12-slim AS runtime
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl && apt-get clean
+
 WORKDIR /app
 
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
@@ -26,4 +28,4 @@ COPY ./api /app/api
 
 EXPOSE 8000
 
-CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

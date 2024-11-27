@@ -5,6 +5,8 @@ services:
       - 8080:80
     volumes:
       - ./static-site:/usr/share/nginx/html
+    depends_on:
+      - api
   redis:
     image: redis
     ports:
@@ -13,9 +15,31 @@ services:
     build:
       context: .
       dockerfile: .docker/app/Dockerfile
+    image: task-manager:0.1
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - 8000:8000
     expose:
       - 8000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/ping"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
     volumes:
-      - ./api:/app/api
+      - ./api:/app/api\
+    depends_on:
+      - redis
+  redis-populate:
+    image: redis
+    entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
+    depends_on:
+      - redis
+    env_file:
+      - ./.docker/redis/env.redis-populate
+    volumes:
+      - ./.docker/redis/redis-populate.txt:/redis-populate.txt
+      - ./.docker/redis/redis-populate.sh:/redis-populate.sh
