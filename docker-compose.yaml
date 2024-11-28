@@ -11,6 +11,12 @@ services:
     image: redis
     ports:
       - 6379:6379
+    labels:
+      - compose.app=task-manager
+    volumes:
+      - ./.docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - redis-data:/data
+    entrypoint: ["redis-server", "/usr/local/etc/redis/redis.conf"]
   api:
     build:
       context: .
@@ -43,3 +49,7 @@ services:
     volumes:
       - ./.docker/redis/redis-populate.txt:/redis-populate.txt
       - ./.docker/redis/redis-populate.sh:/redis-populate.sh
+volumes:
+  redis-data:
+    labels:
+      - compose.app=volume-example

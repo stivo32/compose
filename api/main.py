@@ -26,7 +26,7 @@ def get_env(var_name: str, default: str) -> str:
 
 
 def get_int_env(var_name: str, default: int) -> int:
-    return int(get_env(var_name, default))
+    return int(get_env(var_name, str(default)))
 
 
 async_redis = redis.Redis(
