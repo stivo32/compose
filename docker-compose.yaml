@@ -20,7 +20,7 @@ services:
       - redis-data:/data
     entrypoint: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     networks:
-      - task-manager-public-network
+      - redis-network
   api:
     build:
       context: .
@@ -45,6 +45,7 @@ services:
       - redis
     networks:
       - task-manager-public-network
+      - redis-network
   redis-populate:
     image: redis
     entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
@@ -56,7 +57,7 @@ services:
       - ./.docker/redis/redis-populate.txt:/redis-populate.txt
       - ./.docker/redis/redis-populate.sh:/redis-populate.sh
     networks:
-      - task-manager-public-network
+      - redis-network
   redis-backup:
     image: bash
     entrypoint: ["/snapshot-backup.sh"]
@@ -71,7 +72,7 @@ services:
     labels:
       - compose-app=task-manager
     networks:
-      - task-manager-public-network
+      - redis-network
 volumes:
   redis-data:
     labels:
@@ -81,5 +82,8 @@ volumes:
       - compose-app=task-manager
 networks:
   task-manager-public-network:
+    labels:
+      - compose.app=task-manager
+  redis-network:
     labels:
       - compose.app=task-manager
