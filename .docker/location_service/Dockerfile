@@ -24,8 +24,8 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-COPY ./task_manager /app/task_manager
+COPY ./location_service /app/location_service
 
-EXPOSE 8000
+EXPOSE 8001
 
-CMD ["uvicorn", "task_manager.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "location_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
