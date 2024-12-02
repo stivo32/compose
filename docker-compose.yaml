@@ -6,7 +6,7 @@ services:
     volumes:
       - ./static-site:/usr/share/nginx/html
     depends_on:
-      - api
+      - task-manager
     networks:
       - task-manager-public-network
   redis:
@@ -14,17 +14,17 @@ services:
     ports:
       - 6379:6379
     labels:
-      - compose.app=task-manager
+      - compose.task_manager=task-manager
     volumes:
       - ./.docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
       - redis-data:/data
     entrypoint: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     networks:
       - redis-network
-  api:
+  task-manager:
     build:
       context: .
-      dockerfile: .docker/app/Dockerfile
+      dockerfile: .docker/task_manager/Dockerfile
     image: task-manager:0.1
     environment:
       - REDIS_HOST=redis
@@ -40,7 +40,7 @@ services:
       retries: 5
       start_period: 5s
     volumes:
-      - ./api:/app/api
+      - ./task_manager:/app/task_manager
     depends_on:
       - redis
     networks:
@@ -64,7 +64,7 @@ services:
     depends_on:
       - redis
     environment:
-      - BACKUP_PERIOD=10
+      - BACKUP_PERIOD=60
     volumes:
       - ./.docker/redis/snapshot-backup.sh:/snapshot-backup.sh
       - redis-data:/data:ro
@@ -83,7 +83,7 @@ volumes:
 networks:
   task-manager-public-network:
     labels:
-      - compose.app=task-manager
+      - compose-app=task-manager
   redis-network:
     labels:
-      - compose.app=task-manager
+      - compose-app=task-manager
