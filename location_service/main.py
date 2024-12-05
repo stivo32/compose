@@ -59,7 +59,6 @@ def decode_redis_data(data: dict) -> dict:
 
 async def persist_location(location: Location) -> None:
     location_key = f"location:{location.id}"
-    logger.warning(location)
     await async_redis.hset(
         location_key,
         mapping=location.dict(),
@@ -82,20 +81,20 @@ async def fetch_location(location_id: str) -> Optional[Location]:
 
 
 async def nearby_locations(longitude: float, latitude: float, unit: str, distance: float) -> List[Location]:
-    geo_locations = await async_redis.georadius(
+    geo_locations = await async_redis.geosearch(
         'locations',
-        longitude,
-        latitude,
-        distance,
-        unit,
+        member=None,
+        longitude=longitude,
+        latitude=latitude,
+        radius=distance,
+        unit=unit,
         withdist=True,
         sort='ASC'
     )
-    logger.warning(geo_locations)
     locations_near_me = []
 
-    for geo_location in geo_locations:
-        location = await fetch_location(geo_location)
+    for location_id, distance in geo_locations:
+        location = await fetch_location(location_id.decode())
         if location:
             locations_near_me.append(location)
 
@@ -121,7 +120,6 @@ async def get_location(
         longitude: float,
         distance: float,
         unit: str = 'km'):
-    logger.warning(f'{latitude=}, {longitude=}, {distance=}, {unit=}')
     try:
         locations = await nearby_locations(
             longitude,
@@ -130,8 +128,7 @@ async def get_location(
             distance
         )
     except Exception as e:
-        raise
-        # raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
     return {'locations': locations}
 
 

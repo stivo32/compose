@@ -50,7 +50,7 @@ services:
     build:
       context: .
       dockerfile: .docker/location_service/Dockerfile
-    image: location_service:0.1
+    image: location-service:0.1
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
