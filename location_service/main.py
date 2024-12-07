@@ -18,21 +18,25 @@ class LocationInput(BaseModel):
 
     @field_validator("longitude")
     @classmethod
-    def check_location(cls, v: float):
+    def check_location(cls, v: Optional[float]):
+        if not v:
+            return v
         if not (-180 <= v <= 180):
             raise ValueError('Longitude must be inside (-180.0, 180.0)')
         return v
 
     @field_validator("latitude")
     @classmethod
-    def check_location(cls, v: float):
+    def check_location(cls, v: Optional[float]):
+        if not v:
+            return v
         if not (-85.05112878 <= v <= 85.05112878):
             raise ValueError('Longitude must be inside (-85.05112878, 85.05112878)')
         return v
 
 
 class Location(LocationInput):
-    id: str
+    id: Optional[str] = None
 
 
 def get_env(var_name: str, default: str) -> str:
@@ -108,14 +112,14 @@ async def health_check():
 
 @app.get("/location/{location_id}")
 async def get_location(location_id: str):
-    location = await get_location(location_id)
+    location = await fetch_location(location_id)
     if location is None:
         raise HTTPException(status_code=404, detail="location not found")
     return {"location": location}
 
 
 @app.get("/location/nearby/")
-async def get_location(
+async def get_nearby_locations(
         latitude: float,
         longitude: float,
         distance: float,
@@ -133,13 +137,13 @@ async def get_location(
 
 
 @app.post("/location")
-async def create_location(location: LocationInput):
+async def create_location(location_input: Location):
     location_id = str(uuid4())
-    logger.warning(f'LocationInput: {location}')
-    location_to_insert = Location(id=location_id, **location.dict())
-    logger.warning(f'Location: {location}')
+    logger.warning(location_input)
+    location = Location(id=location_id, **location_input.model_dump())
+    logger.warning(location)
     try:
-        await persist_location(location_to_insert)
-        return {"location": location_to_insert, "created": True, "message": "Location Created Successfully"}
+        await persist_location(location)
+        return {"location": location, "created": True, "message": "Location Created Successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

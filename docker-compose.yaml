@@ -29,6 +29,7 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - LOCATION_SERVICE=location-service:8001
     ports:
       - 8000:8000
     expose:
@@ -46,6 +47,7 @@ services:
     networks:
       - task-manager-public-network
       - redis-network
+      - location-network
   location-service:
     build:
       context: .
@@ -69,8 +71,8 @@ services:
     depends_on:
       - redis
     networks:
-      - task-manager-public-network
       - redis-network
+      - location-network
   redis-populate:
     image: redis
     entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
@@ -107,8 +109,5 @@ volumes:
       - compose-app=task-manager
 networks:
   task-manager-public-network:
-    labels:
-      - compose-app=task-manager
   redis-network:
-    labels:
-      - compose-app=task-manager
+  location-network:
