@@ -75,9 +75,17 @@ async def persist_task(task: Task, location_service: LocationService) -> None:
         task.location = location
     mapping = {
         **task.dict(),
-        **task.location.dict()
     }
     del mapping['location']
+    if task.location is not None:
+        mapping.update({
+        'location_id': task.location.id,
+        'location_name': task.location.name,
+        'location_description': task.location.description,
+        'location_longitude': task.location.longitude,
+        'location_latitude': task.location.latitude,
+        })
+
     logger.warning(mapping)
     await async_redis.hset(
         task_key,
@@ -97,9 +105,13 @@ async def fetch_task(task_id: str) -> Optional[Task]:
         description=task_data["description"],
         timestamp=int(task_data["timestamp"]),
         location=Location(
-            id=task_data["id"],
+            id=task_data["location_id"],
+            name=task_data["location_name"],
+            description=task_data["location_description"],
+            longitude=task_data["location_longitude"],
+            latitude=task_data["location_latitude"],
 
-        ) if task_data["location"] else None
+        ) if task_data.get("location_id") else None
     )
     return task
 
@@ -114,8 +126,6 @@ async def fetch_tasks() -> List[Task]:
     tasks = []
     for task_id in task_ids:
         task = await fetch_task(task_id.decode())
-        if task is None:
-            continue
         tasks.append(task)
     return tasks
 

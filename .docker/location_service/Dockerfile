@@ -28,4 +28,4 @@ COPY ./location_service /app/location_service
 
 EXPOSE 8001
 
-CMD ["uvicorn", "location_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["uvicorn", "location_service.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload"]

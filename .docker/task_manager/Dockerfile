@@ -28,4 +28,4 @@ COPY ./task_manager /app/task_manager
 
 EXPOSE 8000
 
-CMD ["uvicorn", "task_manager.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "task_manager.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
