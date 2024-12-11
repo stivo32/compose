@@ -23,7 +23,7 @@ def create_task_message(task_id: str, timestamp: int, location: Optional[Locatio
 
 async def publish_task_message(message: TaskMessage):
     await async_redis.xadd(
-        name='task_stream',
+        name='task-stream',
         fields=message.model_dump(),
         id='*'
     )

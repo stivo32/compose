@@ -73,6 +73,17 @@ services:
     networks:
       - redis-network
       - location-network
+  event-service:
+    build:
+      context: .
+      dockerfile: ./.docker/event_service/Dockerfile
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - redis-network
   redis-populate:
     image: redis
     entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
