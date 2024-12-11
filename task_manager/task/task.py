@@ -6,8 +6,9 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 
-from task_manager.location.location import Location, LocationService, get_location_service
+from task_manager.location import Location, LocationService, get_location_service
 from task_manager.redis_db import async_redis
+from task_manager.stream import create_task_message, publish_task_message
 from task_manager.utils import decode_redis_data
 
 logger = logging.getLogger()
@@ -92,6 +93,8 @@ async def persist_task(task: Task, location_service: LocationService) -> None:
         mapping=mapping,
     )
     await async_redis.zadd("tasks", {str(task.id): task.timestamp})
+    task_message = create_task_message(task_id=task.id, timestamp=task.timestamp, location=task.location or None)
+    await publish_task_message(task_message)
 
 
 async def fetch_task(task_id: str) -> Optional[Task]:

@@ -139,11 +139,9 @@ async def get_nearby_locations(
 @app.post("/location")
 async def create_location(location_input: Location):
     location_id = str(uuid4())
-    logger.warning(location_input)
-    location = Location(id=location_id, **location_input.model_dump())
-    logger.warning(location)
+    location_input.id = location_id
     try:
-        await persist_location(location)
-        return {"location": location, "created": True, "message": "Location Created Successfully"}
+        await persist_location(location_input)
+        return {"location": location_input, "created": True, "message": "Location Created Successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
