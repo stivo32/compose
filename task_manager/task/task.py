@@ -1,9 +1,11 @@
+import asyncio
 import logging
 import time
 from typing import Optional, List
 from uuid import uuid4
 
 from fastapi import APIRouter, HTTPException, Depends
+from prometheus_client import Summary
 from pydantic import BaseModel
 
 from task_manager.location import Location, LocationService, get_location_service
@@ -26,8 +28,13 @@ class Task(TaskInput):
     timestamp: int
 
 
+PING_SUMMARY = Summary('ping_processing_time', 'ping time')
+
+
+@PING_SUMMARY.time()
 @router.get("/ping")
 async def health_check():
+    await asyncio.sleep(3)
     return {"message": "pong"}
 
 
@@ -43,8 +50,13 @@ async def get_task(task_id: str, location_service: LocationService = Depends(get
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
     response = {"task": task}
+    logger.warning({"task": task})
     if task.location is not None:
-        locations_near_me = await location_service.find_location_near_me(**task.location.model_dump())
+        locations_near_me = await location_service.find_location_near_me(longitude=task.location.longitude,
+                                                                         latitude=task.location.latitude, unit="km",
+                                                                         distance=1.0)
+        logger.warning(locations_near_me)
+        locations_near_me = exclude_self(location_id=task.location.id, locations_near_me=locations_near_me)
         response.update({"locationsNearMe": locations_near_me})
     return response
 
@@ -80,14 +92,13 @@ async def persist_task(task: Task, location_service: LocationService) -> None:
     del mapping['location']
     if task.location is not None:
         mapping.update({
-        'location_id': task.location.id,
-        'location_name': task.location.name,
-        'location_description': task.location.description,
-        'location_longitude': task.location.longitude,
-        'location_latitude': task.location.latitude,
+            'location_id': task.location.id,
+            'location_name': task.location.name,
+            'location_description': task.location.description,
+            'location_longitude': task.location.longitude,
+            'location_latitude': task.location.latitude,
         })
 
-    logger.warning(mapping)
     await async_redis.hset(
         task_key,
         mapping=mapping,

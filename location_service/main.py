@@ -4,10 +4,25 @@ from typing import Optional, List
 from uuid import uuid4
 
 import redis.asyncio as redis
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException
+from prometheus_client import make_asgi_app, Counter, Histogram
 from pydantic import BaseModel, field_validator
+from starlette.requests import Request
 
 logger = logging.getLogger()
+
+
+REQUEST_COUNT = Counter(
+    'http_requests_total',
+    'Total number of HTTP requests',
+    ['method', 'endpoint']
+)
+
+REQUEST_LATENCY = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency',
+    ['method', 'endpoint']
+)
 
 
 class LocationInput(BaseModel):
@@ -54,7 +69,18 @@ async_redis = redis.Redis(
         db=get_int_env("REDIS_DB", 0),
     ),
 )
+metrics_app = make_asgi_app()
 app = FastAPI()
+app.mount('/metrics', metrics_app)
+
+
+@app.middleware('http')
+async def collect_metrics(request: Request, call_next):
+    with REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).time():
+        response = await call_next(request)
+
+    REQUEST_COUNT.labels(method=request.method, endpoint=request.url.path).inc()
+    return response
 
 
 def decode_redis_data(data: dict) -> dict:

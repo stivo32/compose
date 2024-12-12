@@ -24,10 +24,6 @@ class Location(BaseModel):
     id: Optional[str] = None
 
 
-class LocationsNearMe(BaseModel):
-    Locations: list[Location]
-
-
 class LocationService:
     def __init__(self, base_url: str):
         self.base_url = "http://" + base_url
@@ -73,7 +69,7 @@ class LocationService:
             response = await client.get(url)
             response.raise_for_status()
 
-            return LocationsNearMe(**response.json()['locations'])
+            return [Location(**data) for data in response.json()['locations']]
 
 
 def get_location_service() -> LocationService:
