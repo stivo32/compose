@@ -1,14 +1,20 @@
 services:
-  nginx:
-    image: custom-nginx:0.1
+  prometheus:
+    image: prom/prometheus
     ports:
-      - 8080:80
+      - 9090:9090
     volumes:
-      - ./static-site:/usr/share/nginx/html
-    depends_on:
-      - task-manager
+      - ./prometheus.yaml:/etc/prometheus/prometheus.yml
     networks:
-      - task-manager-public-network
+      - monitoring-network
+  push-gateway:
+    image: prom/pushgateway
+    networks:
+      - monitoring-network
+    ports:
+      - 9091:9091
+    expose:
+      - 9091
   redis:
     image: redis
     ports:
@@ -48,6 +54,7 @@ services:
       - task-manager-public-network
       - redis-network
       - location-network
+      - monitoring-network
   location-service:
     build:
       context: .
@@ -73,6 +80,7 @@ services:
     networks:
       - redis-network
       - location-network
+      - monitoring-network
   event-service:
     build:
       context: .
@@ -80,22 +88,25 @@ services:
     environment:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - PUSH_GATEWAY_HOST=push-gateway
+      - PUSH_GATEWAY_PORT=9091
     depends_on:
       - redis
     networks:
       - redis-network
-  redis-populate:
-    image: redis
-    entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
-    depends_on:
-      - redis
-    env_file:
-      - ./.docker/redis/env.redis-populate
-    volumes:
-      - ./.docker/redis/redis-populate.txt:/redis-populate.txt
-      - ./.docker/redis/redis-populate.sh:/redis-populate.sh
-    networks:
-      - redis-network
+      - monitoring-network
+#  redis-populate:
+#    image: redis
+#    entrypoint: ["/redis-populate.sh","/redis-populate.txt"]
+#    depends_on:
+#      - redis
+#    env_file:
+#      - ./.docker/redis/env.redis-populate
+#    volumes:
+#      - ./.docker/redis/redis-populate.txt:/redis-populate.txt
+#      - ./.docker/redis/redis-populate.sh:/redis-populate.sh
+#    networks:
+#      - redis-network
 #  redis-backup:
 #    image: bash
 #    entrypoint: ["/snapshot-backup.sh"]
@@ -122,3 +133,4 @@ networks:
   task-manager-public-network:
   redis-network:
   location-network:
+  monitoring-network:

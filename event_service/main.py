@@ -1,4 +1,5 @@
 import os
+import time
 
 import redis
 import logging
@@ -7,8 +8,8 @@ from prometheus_client import Gauge, Counter, push_to_gateway, CollectorRegistry
 
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 REDIS_PORT = os.getenv("REDIS_PORT", "6379")
-PROMETHEUS_HOST = os.getenv("PROMETHEUS_HOST", "prometheus-service")
-PROMETHEUS_PORT = os.getenv("PROMETHEUS_PORT", "9091")
+PROMETHEUS_HOST = os.getenv("PUSH_GATEWAY_HOST", "push-gateway")
+PROMETHEUS_PORT = os.getenv("PUSH_GATEWAY_PORT", "9091")
 
 registry = CollectorRegistry()
 
@@ -40,7 +41,9 @@ TASK_LATENCY = Gauge(
 
 
 def push_to_prometheus():
-    push_to_gateway(gateway=f'{PROMETHEUS_HOST}:{PROMETHEUS_PORT}', job='events_metrics', registry=registry)
+    url = f'http://{PROMETHEUS_HOST}:{PROMETHEUS_PORT}'
+    logger.error(url)
+    push_to_gateway(gateway=url, job='events_metrics', registry=registry)
 
 
 def main():
@@ -70,12 +73,14 @@ def main():
                         location_id = message.get(b'location_id')
 
                         logger.info(f"Received task_id={task_id}, timestamp={timestamp}, location_id={location_id}")
-
+                        logger.info('ACK')
                         client.xack(STREAM, CONSUMER_GROUP, message_id)
                     TASK_COUNT.inc()
+            logger.error('HERE')
             push_to_prometheus()
         except Exception as e:
             logger.error(f"Error processing stream: {e}")
+        time.sleep(0.2)
 
 
 if __name__ == '__main__':
