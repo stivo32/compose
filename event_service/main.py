@@ -80,7 +80,6 @@ def main():
             push_to_prometheus()
         except Exception as e:
             logger.error(f"Error processing stream: {e}")
-        time.sleep(0.2)
 
 
 if __name__ == '__main__':

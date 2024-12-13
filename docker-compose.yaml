@@ -5,6 +5,7 @@ services:
       - 9090:9090
     volumes:
       - ./prometheus.yaml:/etc/prometheus/prometheus.yml
+      - ./alerts.yaml:/etc/prometheus/alerts.yaml
     networks:
       - monitoring-network
   push-gateway:
