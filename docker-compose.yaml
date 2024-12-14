@@ -28,74 +28,74 @@ services:
     entrypoint: ["redis-server", "/usr/local/etc/redis/redis.conf"]
     networks:
       - redis-network
-  task-manager:
-    build:
-      context: .
-      dockerfile: .docker/task_manager/Dockerfile
-    image: task-manager:0.1
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - LOCATION_SERVICE=location-service:8001
-    ports:
-      - 8000:8000
-    expose:
-      - 8000
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/ping"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 5s
-    volumes:
-      - ./task_manager:/app/task_manager
-    depends_on:
-      - redis
-    networks:
-      - task-manager-public-network
-      - redis-network
-      - location-network
-      - monitoring-network
-  location-service:
-    build:
-      context: .
-      dockerfile: .docker/location_service/Dockerfile
-    image: location-service:0.1
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    ports:
-      - 8001:8001
-    expose:
-      - 8001
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8001/ping" ]
-      interval: 20s
-      timeout: 10s
-      retries: 5
-      start_period: 5s
-    volumes:
-      - ./location_service:/app/location_service
-    depends_on:
-      - redis
-    networks:
-      - redis-network
-      - location-network
-      - monitoring-network
-  event-service:
-    build:
-      context: .
-      dockerfile: ./.docker/event_service/Dockerfile
-    environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - PUSH_GATEWAY_HOST=push-gateway
-      - PUSH_GATEWAY_PORT=9091
-    depends_on:
-      - redis
-    networks:
-      - redis-network
-      - monitoring-network
+#  task-manager:
+#    build:
+#      context: .
+#      dockerfile: task_manager/Dockerfile
+#    image: task-manager:0.1
+#    environment:
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - LOCATION_SERVICE=location-service:8001
+#    ports:
+#      - 8000:8000
+#    expose:
+#      - 8000
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8000/ping"]
+#      interval: 20s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 5s
+#    volumes:
+#      - ./task_manager:/app/task_manager
+#    depends_on:
+#      - redis
+#    networks:
+#      - task-manager-public-network
+#      - redis-network
+#      - location-network
+#      - monitoring-network
+#  location-service:
+#    build:
+#      context: .
+#      dockerfile: .docker/location_service/Dockerfile
+#    image: location-service:0.1
+#    environment:
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#    ports:
+#      - 8001:8001
+#    expose:
+#      - 8001
+#    healthcheck:
+#      test: [ "CMD", "curl", "-f", "http://localhost:8001/ping" ]
+#      interval: 20s
+#      timeout: 10s
+#      retries: 5
+#      start_period: 5s
+#    volumes:
+#      - ./location_service:/app/location_service
+#    depends_on:
+#      - redis
+#    networks:
+#      - redis-network
+#      - location-network
+#      - monitoring-network
+#  event-service:
+#    build:
+#      context: .
+#      dockerfile: ./.docker/event_service/Dockerfile
+#    environment:
+#      - REDIS_HOST=redis
+#      - REDIS_PORT=6379
+#      - PUSH_GATEWAY_HOST=push-gateway
+#      - PUSH_GATEWAY_PORT=9091
+#    depends_on:
+#      - redis
+#    networks:
+#      - redis-network
+#      - monitoring-network
 #  redis-populate:
 #    image: redis
 #    entrypoint: ["/redis-populate.sh","/redis-populate.txt"]

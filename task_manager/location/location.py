@@ -43,11 +43,17 @@ class LocationService:
 
         endpoint = LocationEndpoints.LOCATION
         url = self.base_url + endpoint
+        logger.error(f'{url=}')
         async with httpx.AsyncClient() as client:
             params = {
                 **location.model_dump()
             }
-            response = await client.post(url, json=params)
+            try:
+                logger.error(f'{url=}, {params=}')
+                response = await client.post(url, json=params)
+            except Exception as e:
+                logger.error(f'FOUND ERROR, {e}')
+            logger.error(response.json())
             response.raise_for_status()
             location = response.json()['location']
             return Location(**location)
