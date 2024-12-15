@@ -1,0 +1,72 @@
+{
+  "data": {
+    "pairs": [
+      {
+        "request": {
+          "path": [
+            {
+              "matcher": "exact",
+              "value": "/location"
+            }
+          ],
+          "method": [
+            {
+              "matcher": "exact",
+              "value": "POST"
+            }
+          ],
+          "destination": [
+            {
+              "matcher": "exact",
+              "value": "location-service:8001"
+            }
+          ],
+          "scheme": [
+            {
+              "matcher": "exact",
+              "value": "http"
+            }
+          ],
+          "body": [
+            {
+              "matcher": "glob",
+              "value": "*"
+            }
+          ]
+        },
+        "response": {
+          "status": 200,
+          "body": "{\"location\":{\"name\":\"test_loc\",\"description\":\"string\",\"longitude\":14.0,\"latitude\":13.0,\"id\":\"9464ec7e-b46f-44a1-9ad0-0b8254bac99d\"},\"created\":true,\"message\":\"Location Created Successfully\"}",
+          "encodedBody": false,
+          "headers": {
+            "Content-Length": [
+              "189"
+            ],
+            "Content-Type": [
+              "application/json"
+            ],
+            "Date": [
+              "Sun, 15 Dec 2024 09:48:26 GMT"
+            ],
+            "Hoverfly": [
+              "Was-Here"
+            ],
+            "Server": [
+              "uvicorn"
+            ]
+          },
+          "templated": false
+        }
+      }
+    ],
+    "globalActions": {
+      "delays": [],
+      "delaysLogNormal": []
+    }
+  },
+  "meta": {
+    "schemaVersion": "v5.3",
+    "hoverflyVersion": "v1.10.6",
+    "timeExported": "2024-12-15T09:49:54Z"
+  }
+}
