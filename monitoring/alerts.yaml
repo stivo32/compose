@@ -1,5 +1,0 @@
-groups:
-  - name: task-manager
-    rules:
-      - alert: too-many-tasks
-        expr: rate(task_event_processing_total[5m]) > 0.1
