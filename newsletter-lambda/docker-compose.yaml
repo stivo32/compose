@@ -6,6 +6,8 @@ services:
     image: newsletter_lambda
     ports:
      - 8080:8080
+    expose:
+      - 8080
     environment:
      - SIMULATED=true
      - DYNAMODB_ENDPOINT=http://dynamodb:8000

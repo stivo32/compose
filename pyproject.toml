@@ -9,6 +9,7 @@ readme = "README.md"
 python = "^3.12"
 boto3 = "^1.35.81"
 aws-lambda-powertools = "^3.3.0"
+requests = "^2.32.3"
 
 
 [tool.poetry.group.dev.dependencies]

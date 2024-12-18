@@ -49,7 +49,7 @@ services:
     networks:
       - aws-internal
     environment:
-      - initialBuckets=subscription-bucket
+      - initialBuckets=subscription_bucket
 networks:
   aws-internal:
   aws-public:

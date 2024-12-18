@@ -1,0 +1,18 @@
+services:
+  s3store-lambda:
+    build:
+      context: .
+      dockerfile: ./s3store-lambda/Dockerfile
+    image: s3store-lambda
+    links:
+      - "s3:subscription-bucket.s3"
+    environment:
+     - SIMULATED=true
+     - S3_ENDPOINT=http://s3:9090
+     - SUBSCRIPTION_BUCKET=subscription_bucket
+    depends_on:
+      - s3
+    env_file:
+      - ./mock_credentials.env
+    networks:
+      aws-internal:
